@@ -9,7 +9,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Edu Write',
+      title: 'My Edu Write',
       theme: theme,
       home: RootPage(),
       debugShowCheckedModeBanner: false,

@@ -32,7 +32,7 @@ class Footer extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Edu Write",
+                      "My Edu Write",
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -40,7 +40,7 @@ class Footer extends StatelessWidget {
                     ),
                     SizedBox(height: 8),
                     Text(
-                      "Edu Write – your smart academic companion for fresh assignment samples, tailored solutions, and powerful study tools...",
+                      "My Edu Write – your smart academic companion for fresh assignment samples, tailored solutions, and powerful study tools...",
                       style: TextStyle(color: Colors.white70),
                     ),
                   ],

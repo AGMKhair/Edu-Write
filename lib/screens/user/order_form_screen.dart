@@ -1,13 +1,37 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:eduwrite/widgets/footer_widget.dart';
+import 'package:eduwrite/widgets/header_bar.dart';
+import 'package:eduwrite/widgets/order_form_widget.dart';
+import 'package:eduwrite/widgets/promo_banner.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:file_picker/file_picker.dart';
-import '../../services/auth_service.dart';
-import '../../services/firestore_service.dart';
-import '../../services/storage_service.dart';
-import '../../models/order_model.dart';
-import 'package:uuid/uuid.dart';
 
+class OrderFormScreen extends StatelessWidget {
+  const OrderFormScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      // appBar: AppBar(title: const Text('Place Order')),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              PromoBanner(),
+              HeaderBar(),
+              OrderForm(),
+              const SizedBox(height: 32),
+              const Footer(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+
+/*
 class OrderFormScreen extends StatefulWidget {
   @override
   State<OrderFormScreen> createState() => _OrderFormScreenState();
@@ -45,8 +69,9 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
       final uid = auth.currentUser?.uid ?? "guest_${Uuid().v4()}";
 
       /// Firestore এ order doc তৈরি
-      final docRef =
-      FirebaseFirestore.instance.collection('orders').doc(); // auto ID
+      final docRef = FirebaseFirestore.instance
+          .collection('orders')
+          .doc(); // auto ID
       final orderId = docRef.id;
 
       final order = OrderModel(
@@ -72,19 +97,19 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
         }
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Order submitted successfully')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Order submitted successfully')));
 
       // Success page redirect
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => OrderSuccessScreen(orderId: orderId),
-        ),
+        MaterialPageRoute(builder: (_) => OrderSuccessScreen(orderId: orderId)),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
       setState(() => loading = false);
     }
@@ -96,46 +121,11 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
       appBar: AppBar(title: Text('Place Order')),
       body: Padding(
         padding: EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: ListView(
+        child: SingleChildScrollView(
+          child: Column(
             children: [
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Subject Name'),
-                onSaved: (v) => subject = v ?? '',
-                validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-              ),
-              DropdownButtonFormField(
-                value: type,
-                items: ['Assignment', 'Project', 'Research Paper']
-                    .map((e) =>
-                    DropdownMenuItem(child: Text(e), value: e.toString()))
-                    .toList(),
-                onChanged: (v) => setState(() => type = v as String),
-              ),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Details / Key points'),
-                minLines: 3,
-                maxLines: 6,
-                onSaved: (v) => details = v ?? '',
-              ),
-              SizedBox(height: 8),
-              ElevatedButton.icon(
-                onPressed: pickFile,
-                icon: Icon(Icons.upload_file),
-                label: Text(
-                  pickedFile == null
-                      ? 'Upload reference file'
-                      : pickedFile!.name,
-                ),
-              ),
-              SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: loading ? null : submitOrder,
-                child: loading
-                    ? CircularProgressIndicator(color: Colors.white)
-                    : Text('Submit Order'),
-              ),
+              OrderForm(),
+              Footer(),
             ],
           ),
         ),
@@ -143,9 +133,11 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
     );
   }
 }
+*/
 
 class OrderSuccessScreen extends StatelessWidget {
   final String orderId;
+
   const OrderSuccessScreen({required this.orderId});
 
   @override
@@ -167,7 +159,7 @@ class OrderSuccessScreen extends StatelessWidget {
                 Navigator.popUntil(context, (route) => route.isFirst);
               },
               child: Text("Back to Home"),
-            )
+            ),
           ],
         ),
       ),
