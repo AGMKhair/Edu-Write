@@ -1,36 +1,48 @@
+import 'package:eduwrite/constants/constants.dart';
+import 'package:eduwrite/screens/auth/auth_state.dart';
+import 'package:eduwrite/screens/auth/login_screen.dart';
 import 'package:eduwrite/screens/user/assignment_screen.dart';
+import 'package:eduwrite/screens/user/home_screen.dart';
 import 'package:eduwrite/screens/user/order_form_screen.dart';
 import 'package:flutter/material.dart';
 
 class HeaderBar extends StatelessWidget {
-  const HeaderBar({super.key});
+  bool enableLogin;
+
+  HeaderBar({super.key, this.enableLogin = true});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      color: Colors.white, // you may give a background to avoid overlap artifacts
+      color: Colors.white,
+      // you may give a background to avoid overlap artifacts
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Logo
-          Row(
-            children: const [
-              Icon(Icons.school, color: Colors.blue),
-              SizedBox(width: 8),
-              Text(
-                "My Edu Write ",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              ),
-              Text(
-                "Papers",
-                style: TextStyle(
-                  color: Colors.deepPurple,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
+          InkWell(
+            onTap: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (ctx) => HomeScreen())),
+            child: Row(
+              children: const [
+                Icon(Icons.school, color: Colors.blue),
+                SizedBox(width: 8),
+                Text(
+                  "My Edu Write ",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
-              ),
-            ],
+                Text(
+                  "Papers",
+                  style: TextStyle(
+                    color: Colors.deepPurple,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ],
+            ),
           ),
 
           // Navigation
@@ -38,37 +50,39 @@ class HeaderBar extends StatelessWidget {
             children: [
               const Icon(Icons.phone, size: 16),
               const SizedBox(width: 4),
-              const Text('01707004366'),
+              const Text('+880 1917-625661'),
               const SizedBox(width: 16),
               const Icon(Icons.email, size: 16),
               const SizedBox(width: 4),
-              const Text('agmkhair@gmail.com'),
+              const Text('myeduwrite@gmail.com'),
               const SizedBox(width: 16),
 
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (ctx) => const AssignmentScreen()),
-                  );
-                },
-                child: const Text("Assignments"),
-              ),
-
-           TextButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (ctx) => const AssignmentScreen()),
-                  );
-                },
-                child: const Text("Assignments"),
-              ),
+              if (enableLogin)
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(
+                      context,
+                    ).push(MaterialPageRoute(builder: (ctx) => LoginScreen()));
+                  },
+                  child: Text(
+                    AuthState.isLoggedIn.value
+                        ? AppString.logOut
+                        : AppString.login,
+                  ),
+                ),
 
               TextButton(
                 onPressed: () {
-
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (ctx) => const AssignmentScreen(),
+                    ),
+                  );
                 },
-                child: const Text("Tools"),
+                child: const Text(AppString.assignments),
               ),
+
+              TextButton(onPressed: () {}, child: const Text("Tools")),
 
               TextButton(
                 onPressed: () {
@@ -80,10 +94,12 @@ class HeaderBar extends StatelessWidget {
               ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (ctx) => const OrderFormScreen()),
+                    MaterialPageRoute(
+                      builder: (ctx) => const OrderFormScreen(),
+                    ),
                   );
                 },
-                child: const Text("Order Now"),
+                child: const Text(AppString.orderNow),
               ),
             ],
           ),

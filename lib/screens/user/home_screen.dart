@@ -13,7 +13,7 @@ class HomeScreen extends StatelessWidget {
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
-            children: const [PromoBanner(), HeaderBar(), MainContent(), Footer()],
+            children:  [PromoBanner(), HeaderBar(), MainContent(), Footer()],
           ),
         ),
       ),

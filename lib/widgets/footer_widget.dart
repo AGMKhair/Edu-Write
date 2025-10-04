@@ -78,7 +78,7 @@ class Footer extends StatelessWidget {
                     ),
                     SizedBox(height: 8),
                     Text(
-                      "01707004366",
+                      "+880 1917-625661",
                       style: TextStyle(color: Colors.white70),
                     ),
                     Text("WhatsApp", style: TextStyle(color: Colors.white70)),

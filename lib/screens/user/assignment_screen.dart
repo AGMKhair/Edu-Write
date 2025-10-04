@@ -18,7 +18,7 @@ class AssignmentScreen extends StatelessWidget {
           child: Column(
             children: [
               const PromoBanner(),
-              const HeaderBar(),
+              HeaderBar(),
               const SizedBox(height: 16),
 
               // Main content

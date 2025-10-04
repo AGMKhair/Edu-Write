@@ -1,6 +1,9 @@
+import 'dart:convert';
+import 'dart:js' as js;
+
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:country_code_picker/country_code_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 
 class OrderForm extends StatefulWidget {
@@ -23,6 +26,9 @@ class _OrderFormState extends State<OrderForm> {
   String? _selectedSubject;
   String _selectedCode = "+880";
 
+  final _formKey = GlobalKey<FormState>(); // 👈 Add this to your State class
+  bool _isSubmitting = false; // For showing loading
+
   final List<String> subjects = [
     "Math",
     "Science",
@@ -34,6 +40,7 @@ class _OrderFormState extends State<OrderForm> {
   Future<void> _pickFiles() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
+      withData: true, // ensure bytes are available
     );
 
     if (result != null) {
@@ -58,184 +65,215 @@ class _OrderFormState extends State<OrderForm> {
     }
   }
 
+  String getMimeType(String filename) {
+    final ext = filename.split('.').last.toLowerCase();
+    switch (ext) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'pdf':
+        return 'application/pdf';
+      case 'doc':
+        return 'application/msword';
+      case 'docx':
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      case 'txt':
+        return 'text/plain';
+      default:
+        return 'application/octet-stream'; // fallback
+    }
+  }
+
+  void _submitForm() async {
+    setState(() => _isSubmitting = true);
+
+    final name = nameController.text.trim();
+    final email = emailController.text.trim();
+    final phone = phoneController.text.trim();
+    final details = detailsController.text.trim();
+    final subject = _selectedSubject ?? "";
+    final deliveryDate = _selectedDate?.toIso8601String() ?? "";
+
+    final formJson = jsonEncode({
+      'name': name,
+      'email': email,
+      'phone': '$_selectedCode$phone',
+      'subject': subject,
+      'details': details,
+      'delivery_date': deliveryDate,
+    });
+
+    final attachments = <Map<String, dynamic>>[];
+    for (var file in _selectedFiles) {
+      final bytes = file.bytes;
+      if (bytes != null) {
+        final base64Str = base64Encode(bytes);
+        attachments.add({
+          'name': file.name,
+          'contentBase64': base64Str,
+          'mimeType': getMimeType(file.name),
+        });
+      }
+    }
+
+    js.context.callMethod('sendOrderEmail', [
+      formJson,
+      jsonEncode(attachments),
+    ]);
+
+    setState(() => _isSubmitting = false);
+    _showSuccessDialog();
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.check_circle, color: Colors.green, size: 64),
+                const SizedBox(height: 16),
+                const Text("Your order has been sent successfully!"),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  child: const Text("OK"),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
+    return Card(
+      elevation: 4,
       margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.blue[50],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.title!,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-          ),
-          const SizedBox(height: 16),
-
-          // Name
-          TextField(
-            controller: nameController,
-            decoration: const InputDecoration(labelText: "Name"),
-          ),
-          const SizedBox(height: 8),
-
-          // Email
-          TextField(
-            controller: emailController,
-            decoration: const InputDecoration(labelText: "Email *"),
-          ),
-          const SizedBox(height: 8),
-
-          // Phone with Country Code Picker
-          Row(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CountryCodePicker(
-                initialSelection: 'BD',
-                favorite: const ['+880', 'BD', '+91'],
-                onChanged: (code) {
-                  setState(() {
-                    _selectedCode = code.dialCode ?? "+880";
-                  });
+              TextFormField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: "Name *"),
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Please enter your name'
+                    : null,
+              ),
+
+              const SizedBox(height: 8),
+
+              TextFormField(
+                controller: emailController,
+                decoration: const InputDecoration(labelText: "Email *"),
+                validator: (value) {
+                  if (value == null || value.isEmpty)
+                    return 'Please enter your email';
+                  final emailRegex = RegExp(
+                    r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$",
+                  );
+                  if (!emailRegex.hasMatch(value)) return 'Enter a valid email';
+                  return null;
                 },
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextField(
-                  controller: phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(labelText: "Phone No.*"),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
 
-          // Subject Dropdown
-          DropdownButtonFormField<String>(
-            decoration: const InputDecoration(labelText: "Subject"),
-            value: _selectedSubject,
-            items: subjects
-                .map(
-                  (sub) => DropdownMenuItem(value: sub, child: Text(sub)),
-            )
-                .toList(),
-            onChanged: (val) {
-              setState(() {
-                _selectedSubject = val;
-              });
-            },
-          ),
-          const SizedBox(height: 8),
+              const SizedBox(height: 8),
 
-          // Details
-          TextField(
-            controller: detailsController,
-            maxLines: 5,
-            decoration: const InputDecoration(
-              labelText: "Assignment Details",
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // File Upload Section
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              ElevatedButton.icon(
-                onPressed: _pickFiles,
-                icon: const Icon(Icons.upload_file),
-                label: const Text("Choose Files"),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          // Show selected files
-          _selectedFiles.isNotEmpty
-              ? Wrap(
-            spacing: 8,
-            children: _selectedFiles.map((file) {
-              return Chip(
-                label: Text(
-                  file.name,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                deleteIcon: const Icon(Icons.close),
-                onDeleted: () {
-                  setState(() {
-                    _selectedFiles.remove(file);
-                  });
-                },
-              );
-            }).toList(),
-          )
-              : const Text(
-            "No files selected",
-            style: TextStyle(color: Colors.grey),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Delivery Date Picker
-          Row(
-            children: [
-              ElevatedButton.icon(
-                onPressed: () => _pickDate(context),
-                icon: const Icon(Icons.date_range),
-                label: const Text("Choose Delivery Date"),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 5,
+              // Phone
+              Row(
+                children: [
+                  CountryCodePicker(
+                    initialSelection: 'BD',
+                    favorite: const ['+880', 'BD', '+91'],
+                    onChanged: (code) {
+                      setState(() {
+                        _selectedCode = code.dialCode ?? "+880";
+                      });
+                    },
                   ),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.primary,
-                      width: 1.2,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    color: Theme.of(context).colorScheme.surfaceVariant,
-                  ),
-                  child: Text(
-                    _selectedDate != null
-                        ? DateFormat("dd MMM yyyy").format(_selectedDate!)
-                        : "No date selected",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: _selectedDate != null
-                          ? Theme.of(context).colorScheme.onSurface
-                          : Colors.grey,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextFormField(
+                      controller: phoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        labelText: "Phone No. *",
+                      ),
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Please enter your phone number'
+                          : null,
                     ),
                   ),
+                ],
+              ),
+
+              const SizedBox(height: 8),
+
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(labelText: "Subject *"),
+                value: _selectedSubject,
+                items: subjects
+                    .map(
+                      (sub) => DropdownMenuItem(value: sub, child: Text(sub)),
+                    )
+                    .toList(),
+                onChanged: (val) => setState(() => _selectedSubject = val),
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Please select a subject'
+                    : null,
+              ),
+
+              const SizedBox(height: 8),
+
+              TextFormField(
+                controller: detailsController,
+                maxLines: 5,
+                decoration: const InputDecoration(
+                  labelText: "Assignment Details *",
+                ),
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Please provide assignment details'
+                    : null,
+              ),
+
+              const SizedBox(height: 16),
+
+              // Submit button
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: FilledButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      _submitForm();
+                    }
+                  },
+                  child: _isSubmitting
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text("Submit"),
                 ),
               ),
             ],
           ),
-
-          const SizedBox(height: 16),
-
-          // Submit
-          SizedBox(
-            width: MediaQuery.sizeOf(context).width,
-            height: 50,
-            child: FilledButton(
-              onPressed: () {
-                final phoneNumber = "$_selectedCode ${phoneController.text}";
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Submitted Phone: $phoneNumber")),
-                );
-              },
-              child: const Text("Submit"),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
