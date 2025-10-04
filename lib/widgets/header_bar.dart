@@ -54,10 +54,18 @@ class HeaderBar extends StatelessWidget {
                 child: const Text("Assignments"),
               ),
 
+           TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (ctx) => const AssignmentScreen()),
+                  );
+                },
+                child: const Text("Assignments"),
+              ),
+
               TextButton(
                 onPressed: () {
-                  // For demonstration, you might push to a Tools screen
-                  // Navigator.of(context).push(...);
+
                 },
                 child: const Text("Tools"),
               ),
