@@ -1,3 +1,4 @@
+import 'package:eduwrite/services/loader_service.dart';
 import 'package:eduwrite/utils/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -13,6 +14,7 @@ class MyApp extends StatelessWidget {
       theme: theme,
       home: RootPage(),
       debugShowCheckedModeBanner: false,
+      navigatorKey: LoaderService.navigatorKey,
     );
   }
 }
